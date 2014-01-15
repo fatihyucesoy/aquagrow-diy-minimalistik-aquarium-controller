@@ -1,21 +1,24 @@
 void setLight(){
+  lightPercent="";
     for( int i=0;i <  8; i++){
         uint16_t c_PWM = PWM_Licht(i);
-        /*
-        if(Temp.cooling==true){
-          // 40° = 100% ~ 45/40*100-110=2,5
-          float cTemp = temperatur*100/Temp.temp-110;
-          if(cTemp>0.0){
-            c_PWM= uint16_t(float(c_PWM/(100+cTemp*4))*100);
-          }
-        }
-        */
+        
+        // 40° = 100% ~ 45/40*100-110=2,5
+        float cTemp = temperatur*100/coolingTemp-110;
+        if(cTemp>0.0){
+          c_PWM= uint16_t(float(c_PWM/(100+cTemp*4))*100);
+        }        
         
         if(c_PWM<0){
           c_PWM=0;
         }else if(c_PWM>4095){
           c_PWM=4095;
         }
+        int lP = c_PWM/100/4095;
+        lightPercent+=i;
+        lightPercent+=":";
+        lightPercent+=lP;
+        lightPercent+=" ";
           
         setLED(i*2,uint16_t(c_PWM/2));
         setLED(i*2+1,uint16_t(c_PWM/2));
@@ -42,17 +45,14 @@ void setLED(uint8_t channel, uint16_t Value){
 
 
 int PWM_Licht(int lightIndex){
- //   LIGHT light_chan[8];
-  //  memcpy(light_chan, (LIGHT []){light_channels[lightIndex]}, light_chan);
-
- //   EEPROM.readBlock(eepromLight +(sizeof(light_chan)*lightIndex), light_chan,8);
-	int curIndex=0;
-	for(int n=0;n<8;n++){
-		if(light_channels[lightIndex][n].time < rtc.daystamp){
-			curIndex=n;
-		}else{
-		}
-	}
+  
+  int curIndex=0;
+  for(int n=0;n<8;n++){
+    if(light_channels[lightIndex][n].time < rtc.daystamp){
+      curIndex=n;
+    }else{
+  }
+}
 /*
   Serial.print("index ");
   Serial.println(lightIndex);

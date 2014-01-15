@@ -1,10 +1,12 @@
-#include "Wire.h"
-#include "RTClib.h"
-#include "PCA9685.h"
-#include "avr/pgmspace.h"
-#include "Timer.h"
-#include "OneWire.h"
-#include "MemoryFree.h"
+#include <Wire.h>
+#include <RTClib.h>
+#include <PCA9685.h>
+#include <avr/pgmspace.h>
+#include <Timer.h>
+#include <OneWire.h>
+#include <MemoryFree.h>
+#include <LiquidCrystal_I2C.h>
+#include <SoftwareSerial.h>
 #include "structs.h"
 
 String lightVal[] ={
@@ -25,33 +27,41 @@ String dosingVal[] ={
 };
 
 int coolingTemp = 30;
+boolean show_ph = false;
 
 
-#define DIGITAL1 2  // Temperatur
-#define DIGITAL2 3  // PWM PIN    // Lüfter
-#define DIGITAL3 4  // Dosierpumpe 
-#define SV3 11      // PWM PIN    // Dosierpumpe 
-#define SV4 12      // Dosierpumpe 
-#define SV5 13      // Dosierpumpe 
-#define PUMPCOUNTS 4      // Number Pumps 
+#define rx 2
+#define tx 3
+#define PIN_TEMP 13  // Temperatur
+#define PIN_PWM 12  // PWM PIN    // Lüfter
+#define DOSE1 11  // Dosierpumpe 
+#define DOSE2 10      // PWM PIN    // Dosierpumpe 
+#define DOSE3 9      // Dosierpumpe 
+#define DOSE4 8      // Dosierpumpe 
+#define PUMPCOUNTS 3      // Number Pumps 
 
-int dosingPins[PUMPCOUNTS]={SV5,SV3,SV4,DIGITAL3};
+int dosingPins[PUMPCOUNTS]={DOSE1,DOSE2,DOSE3};
 
 PUMP dosing[PUMPCOUNTS] = { 
 {0,0,"",dosingPins[0],false,0,0},
 {0,0,"",dosingPins[1],false,0,0}, 
-{0,0,"",dosingPins[2],false,0,0}, 
-{0,0,"",dosingPins[3],false,0,0}
+{0,0,"",dosingPins[2],false,0,0}
 };
 
 Timer t;
 PCA9685 ledDriver; 
 RTC_DS1307 rtc;
-OneWire  ds(2);
+OneWire  ds(PIN_TEMP);
+SoftwareSerial PHserial(rx, tx);
+LiquidCrystal_I2C lcd(0x20);  // Set the LCD I2C address
+int stringStart, stringStop = 0;
+int scrollCursor = 16;
+String lightPercent= "";
 
 LIGHT light_channels[8][8];
 
 boolean manualLight=false;
+boolean pumpReset=false;
 
 
 PROGMEM prog_uint16_t pwmtable[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3,3,3,
@@ -105,30 +115,42 @@ PROGMEM prog_uint16_t pwmtable[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
           3979,3984,3988,3992,3997,4001,4005,4010,4014,4018,4023,4027,4031,4036,4040,4045,4049,4053,4058,4062,4066,4071,4075,4080,4084,4088,4093};
 
 //WasserTemperatur
-const short TEMP = SV5;
 float temperatur;
 
 unsigned long last_print = 0;
+unsigned int switch_print=0;
 
 String inputString = "";         // a string to hold incoming data
 boolean stringComplete = false;  // whether the string is complete
+
+// ph
+char ph_data[20];
+char computerdata[20];
+byte received_from_computer=0;
+byte received_from_sensor=0;
+byte arduino_only=0;
+byte startup=0;
+float ph=0;
+byte string_received=0;
+
           
 void setup() {
   setLightSettings(lightVal,light_channels);
   setPumpSettings(dosingVal,dosing);
   // reserve 200 bytes for the inputString:
   inputString.reserve(200);
+  PHserial.begin(38400);
   
   
   Serial.begin(9600);    // Ausgabe am PC
   
-  pinMode( DIGITAL2,OUTPUT);  // PWM PIN    // Lüfter
+  pinMode( PIN_PWM,OUTPUT);  // PWM PIN    // Lüfter
   
   for (int i=0;i<=PUMPCOUNTS;i++){
     pinMode(dosing[i].pinAddr, OUTPUT);
   }
   
-  digitalWrite(DIGITAL2, LOW);
+  digitalWrite(PIN_PWM, LOW);
   
   Wire.begin();           // Wire must be started!
   rtc.begin();
@@ -136,6 +158,10 @@ void setup() {
   
   ledDriver.begin(B000000);  // Address pins A5-A0 set to B111000
   ledDriver.init();
+  lcd.begin(16,2);               // initialize the lcd 
+  byte Celsius[8] = {B11100,B10100,B11100,B0000,B00000,B00000,B00000,B00000};
+  lcd.createChar(0, Celsius);
+
   
 }
 
@@ -150,18 +176,62 @@ void loop() {
   rtc.now();
   t.update();
   setDosing(0);
+  if(PHserial.available() > 0){
+   received_from_sensor=PHserial.readBytesUntil(13,ph_data,20);
+   ph_data[received_from_sensor]=0;
+   string_received=1;
+  } 
+  if(arduino_only==1){
+    Arduino_Control();
+  }
   
   if (millis() - last_print > 1000) {
     last_print = millis();
-  if(!manualLight){
-    setLight();
-  }
+    switch_print++;
+    
+    // Display ausgabe Obere Zeile
+    lcd.setCursor ( 0, 0 ); 
+    lcd.print (retTime());
+    if (switch_print <= 5){
+      switch_print = millis();
+      lcd.setCursor ( 9, 0 ); 
+      lcd.print ("C=");
+      lcd.print (getTemp());
+      lcd.write ((uint8_t)0);
+    }else if (switch_print < 10 && show_ph==true){
+      lcd.setCursor ( 9, 0 ); 
+      lcd.print ("ph=");
+      lcd.print (ph_data);
+    }else{
+      switch_print=0;
+    }
+      
+    
+    // Display ausgabe Untere Zeile
+    lcd.setCursor(scrollCursor, 1);
+    lcd.print(lightPercent.substring(stringStart,stringStop));
+    if(stringStart == 0 && scrollCursor > 0){
+      scrollCursor--;
+      stringStop++;
+    } else if (stringStart == stringStop){
+      stringStart = stringStop = 0;
+      scrollCursor = 16;
+    } else if (stringStop == lightPercent.length() && scrollCursor == 0) {
+      stringStart++;
+    } else {
+      stringStart++;
+      stringStop++;
+    }
+  
+    if(!manualLight){
+      setLight();
+    }
 //    Serial.println(freeMemory());
     temperatur = getTemp();
     if(coolingTemp+2.0 < temperatur){
-        analogWrite(DIGITAL2,255);
+        analogWrite(PIN_PWM,255);
     }else if(coolingTemp-2.0 > temperatur){
-        analogWrite(DIGITAL2,0);
+        analogWrite(PIN_PWM,0);
     }
   }            
 }
