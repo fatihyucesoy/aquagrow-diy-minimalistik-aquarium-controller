@@ -23,9 +23,25 @@ void resetPumps(){
   }
 }
 
-void setPumpSettings(String *values, PUMP dosing[]){
+void setPumpSettings(PUMP dosing[]){
+  // Check loading of stored Light Values
+  boolean loadSetting=EEPROM.readByte(1);
+  String sArr = "";
+      char t_char[sizeof(s_dosingVal)];
   for(int i=0;i<PUMPCOUNTS;i++){
-    String sArr = values[i];
+    // Read String from EEPROM and Convert to light
+    int adr = eepromDosing +(sizeof(s_dosingVal)*i);
+    if(loadSetting==overwrite){
+      EEPROM.readBlock<char>(adr, t_char, sizeof(s_dosingVal));
+      String str(t_char);
+      sArr= str;
+      
+    }else{
+      s_dosingVal.toCharArray(t_char,sizeof(s_dosingVal));
+      EEPROM.updateBlock(adr, t_char,sizeof(s_dosingVal));
+      sArr=s_dosingVal;
+    }
+    
     // Split out Time
     String nActive = slitString(sArr,'=',0);
     // Split out Time

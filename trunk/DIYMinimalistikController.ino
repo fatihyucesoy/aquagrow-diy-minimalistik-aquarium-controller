@@ -2,13 +2,14 @@
 #include <RTClib.h>
 #include <PCA9685.h>
 #include <avr/pgmspace.h>
+#include <EEPROMex.h>
 #include <Timer.h>
 #include <OneWire.h>
 #include <MemoryFree.h>
 #include <LiquidCrystal_I2C.h>
 #include <SoftwareSerial.h>
 #include "structs.h"
-
+/*
 String lightVal[] ={
     "0:01=0,11:00=0,13:00=50,20:00=50,22:00=0,23:30=0,23:30=0,23:32=0",
     "0:01=0,11:00=0,13:00=50,20:00=50,22:00=0,23:30=0,23:30=0,23:32=0",
@@ -18,13 +19,18 @@ String lightVal[] ={
     "0:01=0,11:00=0,13:00=50,20:00=50,22:00=0,23:30=0,23:30=0,23:32=0",
     "0:01=0,10:30=0,11:00=10,11:30=0,21:00=0,21:10=0,22:00=0,23:30=0", //Rot
     "0:01=2,10:30=2,14:30=0,20:00=30,21:30=0,22:00=20,23:30=10,23:55=2"  // Blau
-};
+};*/
+String s_lightVal ="0:01=0,11:00=0,13:00=50,20:00=50,22:00=0,23:30=0,23:30=0,23:32=0";
+/*
 String dosingVal[] ={
     "1=EI=8:30=5=60",
     "1=Eisen=11:00=2=60",
     "1=Flowgrow=13:00=2=60",
     "1=Easycarbo=16:00=5=60"
-};
+};*/
+String s_dosingVal = "1=NPK=10:00=5=60";
+
+boolean overwrite=1;
 
 int coolingTemp = 30;
 boolean show_ph = false;
@@ -132,11 +138,31 @@ byte arduino_only=0;
 byte startup=0;
 float ph=0;
 byte string_received=0;
+const int maxAllowedWrites = 1000;
+const int memBase          = 4;
+int eepromLight= memBase;
+int eepromDosing= eepromLight+(sizeof(s_lightVal)*8);
+int eepromTemp= eepromDosing+(sizeof(s_dosingVal)*PUMPCOUNTS);
 
           
 void setup() {
-  setLightSettings(lightVal,light_channels);
-  setPumpSettings(dosingVal,dosing);
+
+  // start reading from position memBase (address 0) of the EEPROM. Set maximumSize to EEPROMSizeUno 
+  // Writes before membase or beyond EEPROMSizeUno will only give errors when _EEPROMEX_DEBUG is set
+  EEPROM.setMemPool(memBase, EEPROMSizeUno);
+  // Set maximum allowed writes to maxAllowedWrites. 
+  // More writes will only give errors when _EEPROMEX_DEBUG is set
+  EEPROM.setMaxAllowedWrites(maxAllowedWrites);
+  
+  if(EEPROM.readByte(2)==overwrite){
+    coolingTemp=EEPROM.readInt(eepromTemp);
+  }else{
+    EEPROM.updateInt(eepromTemp, coolingTemp);
+    EEPROM.updateByte(2, overwrite);
+  }
+  
+  setLightSettings(light_channels);
+  setPumpSettings(dosing);
   // reserve 200 bytes for the inputString:
   inputString.reserve(200);
   PHserial.begin(38400);
@@ -161,8 +187,6 @@ void setup() {
   lcd.begin(16,2);               // initialize the lcd 
   byte Celsius[8] = {B11100,B10100,B11100,B0000,B00000,B00000,B00000,B00000};
   lcd.createChar(0, Celsius);
-
-  
 }
 
 void loop() {
