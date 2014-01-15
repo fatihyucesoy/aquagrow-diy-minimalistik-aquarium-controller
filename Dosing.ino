@@ -1,4 +1,5 @@
 void setDosing(int Value){
+  resetPumps();
     for( int i=0;i <= PUMPCOUNTS; i++){
       if(dosing[i].active!=0){
             
@@ -11,7 +12,11 @@ void setDosing(int Value){
 }
 
 void resetPumps(){
-  if(rtc.daystamp<100){
+  if(rtc.daystamp>200){
+    pumpReset=true;
+  }
+  if(rtc.daystamp<100 && pumpReset==true){
+    pumpReset=false;
     for( int i=0;i <= PUMPCOUNTS; i++){
         dosing[i].status=false;
     }

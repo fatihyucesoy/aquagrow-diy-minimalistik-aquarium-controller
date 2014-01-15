@@ -21,14 +21,14 @@ String retTime(){
     sReturn = "";
     sReturn += hh;
     sReturn += ":";
-  if (mm < 10) {                  // correct minute if necessary
+  if (mm < 10) {      // correct minute if necessary
     sReturn += "0";
     sReturn += mm;
   }else{
     sReturn += mm;
   }
     sReturn += ":";
-  if (ss < 10) {                  // correct second if necessary
+  if (ss < 10) {      // correct second if necessary
     sReturn += "0";
     sReturn += ss;
   }else{
