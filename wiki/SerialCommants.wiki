@@ -1,0 +1,9 @@
+Time to set => Format 1#DD/MM/YYYY/H/i
+
+Light Chanel => Format 2#0#0:01=0,11:00=0,13:00=50,20:00=50,22:00=0,23:30=0,23:30=0,23:32=0
+
+Dosing => Format 3#1=NPK=10:00=5=60
+
+Temp => Format 4#30
+
+PH => Format 5#7.00
