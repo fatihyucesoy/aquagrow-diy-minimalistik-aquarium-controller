@@ -8,51 +8,54 @@
 #include <MemoryFree.h>
 #include <LiquidCrystal_I2C.h>
 #include <SoftwareSerial.h>
+#include <Keypad_I2C.h>
+#include <Keypad.h>
 #include "structs.h"
-/*
-String lightVal[] ={
-    "0:01=0,11:00=0,13:00=50,20:00=50,22:00=0,23:30=0,23:30=0,23:32=0",
-    "0:01=0,11:00=0,13:00=50,20:00=50,22:00=0,23:30=0,23:30=0,23:32=0",
-    "0:01=0,11:00=0,13:00=50,20:00=50,22:00=0,23:30=0,23:30=0,23:32=0",
-    "0:01=0,11:00=0,13:00=50,20:00=50,22:00=0,23:30=0,23:30=0,23:32=0",
-    "0:01=0,11:00=0,13:00=50,20:00=50,22:00=0,23:30=0,23:30=0,23:32=0",
-    "0:01=0,11:00=0,13:00=50,20:00=50,22:00=0,23:30=0,23:30=0,23:32=0",
-    "0:01=0,10:30=0,11:00=10,11:30=0,21:00=0,21:10=0,22:00=0,23:30=0", //Rot
-    "0:01=2,10:30=2,14:30=0,20:00=30,21:30=0,22:00=20,23:30=10,23:55=2"  // Blau
-};*/
-String s_lightVal ="0:01=0,11:00=0,13:00=50,20:00=50,22:00=0,23:30=0,23:30=0,23:32=0";
-/*
-String dosingVal[] ={
-    "1=EI=8:30=5=60",
-    "1=Eisen=11:00=2=60",
-    "1=Flowgrow=13:00=2=60",
-    "1=Easycarbo=16:00=5=60"
-};*/
+
+
+String s_lightVal ="0:01=0,11:00=0,13:00=50,20:00=50,22:00=0,23:30=0,23:30=0,23:32=0,23:30=0,23:32=0";
 String s_dosingVal = "1=NPK=10:00=5=60";
+String s_relayVal ="0:00=0,11:00=1,13:00=0,20:00=1,22:00=0,23:30=1";
 
 boolean overwrite=1;
 
 int coolingTemp = 30;
 double phValue = 7.00;
 boolean show_ph = false;
+boolean use_relay = false;
 
 
+#define PUMPCOUNTS 6      // Number Pumps
+#define KEYPADI2C 0x21
+
+// PIN MAPPING
 #define rx 2
 #define tx 3
-#define PIN_TEMP 13  // Temperatur
-#define PIN_PWM 12  // PWM PIN    // Lüfter
-#define DOSE1 11  // Dosierpumpe 
-#define DOSE2 10      // PWM PIN    // Dosierpumpe 
-#define DOSE3 9      // Dosierpumpe 
-#define DOSE4 8      // Dosierpumpe 
+//#define KC1 2
+//#define KC2 3
+//#define KC3 4
+//#define KC4 5
+#define RELAY2 6
 #define RELAY1 7      // PH Steckdose 
-#define PUMPCOUNTS 3      // Number Pumps 
+#define DOSE4 8      // Dosierpumpe 
+#define DOSE3 9      // Dosierpumpe 
+#define DOSE2 10      // PWM PIN    // Dosierpumpe 
+#define DOSE1 11  // Dosierpumpe 
+#define PIN_PWM 12  // PWM PIN    // Lüfter
+#define PIN_TEMP 13  // Temperatur
+//#define KR1 14
+//#define KR2 15
+//#define KR3 16
+//#define KR4 17
 
 int dosingPins[PUMPCOUNTS]={DOSE1,DOSE2,DOSE3};
 
-PUMP dosing[PUMPCOUNTS] = { 
+PUMP dosing[PUMPCOUNTS] = {  
+{0,0,"",dosingPins[0],false,0,0},
 {0,0,"",dosingPins[0],false,0,0},
 {0,0,"",dosingPins[1],false,0,0}, 
+{0,0,"",dosingPins[1],false,0,0}, 
+{0,0,"",dosingPins[2],false,0,0}, 
 {0,0,"",dosingPins[2],false,0,0}
 };
 
@@ -66,20 +69,24 @@ int stringStart, stringStop = 0;
 int scrollCursor = 16;
 String lightPercent= "";
 
-LIGHT light_channels[8][8]={
-        {{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}},
-        {{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}},
-        {{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}},
-        {{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}},
-        {{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}},
-        {{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}},
-        {{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}},
-        {{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}}
+LIGHT light_channels[8][10]={
+        {{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}},
+        {{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}},
+        {{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}},
+        {{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}},
+        {{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}},
+        {{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}},
+        {{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}},
+        {{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}}
 };
 
 boolean manualLight=false;
 boolean pumpReset=false;
 
+
+RELAY relay_channels[6]={
+                {0,0},{0,0},{0,0},{0,0},{0,0},{0,0}
+              };
 
 PROGMEM prog_uint16_t pwmtable[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3,3,3,
           3,3,3,3,3,3,3,3,3,4,4,4,4,4,4,4,4,4,4,5,5,5,5,5,5,5,5,5,6,6,6,6,6,6,6,6,7,7,7,7,7,7,7,8,8,8,8,8,8,8,9,9,9,9,9,9,10,10,10,10,10,10,11,11,11,11,11,11,12,12,12,12,12,12,13,13,13,
@@ -131,6 +138,22 @@ PROGMEM prog_uint16_t pwmtable[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
           3825,3829,3834,3838,3842,3846,3851,3855,3859,3863,3868,3872,3876,3880,3885,3889,3893,3897,3902,3906,3910,3915,3919,3923,3928,3932,3936,3940,3945,3949,3953,3958,3962,3966,3971,3975,
           3979,3984,3988,3992,3997,4001,4005,4010,4014,4018,4023,4027,4031,4036,4040,4045,4049,4053,4058,4062,4066,4071,4075,4080,4084,4088,4093};
 
+
+const byte ROWS = 4; //four rows
+const byte COLS = 4; //three columns
+//define the cymbols on the buttons of the keypads
+char keys[ROWS][COLS] = {
+  {'1','2','3','A'},
+  {'4','5','6','B'},
+  {'7','8','9','C'},
+  {'*','0','#','D'}
+};
+byte rowPins[ROWS] = {0, 1, 2, 3}; //connect to the row pinouts of the keypad
+byte colPins[COLS] = {4, 5, 6,7}; //connect to the column pinouts of the keypad
+
+//initialize an instance of class NewKeypad
+Keypad_I2C keypad = Keypad_I2C( makeKeymap(keys), rowPins, colPins, ROWS, COLS, KEYPADI2C );
+
 //WasserTemperatur
 float temperatur;
 
@@ -150,11 +173,12 @@ byte startup=0;
 float ph=0;
 byte string_received=0;
 const int maxAllowedWrites = 1000;
-const int memBase          = 4;
+const int memBase          = 10;
 int eepromLight= memBase;
 int eepromDosing= eepromLight+(sizeof(s_lightVal)*8);
 int eepromTemp= eepromDosing+(sizeof(s_dosingVal)*PUMPCOUNTS);
 int eepromPH= eepromTemp+(sizeof(coolingTemp));
+int eepromRelay= eepromPH+(sizeof(s_relayVal));
 
           
 void setup() {
@@ -205,6 +229,7 @@ void setup() {
   lcd.begin(16,2);               // initialize the lcd 
   byte Celsius[8] = {B11100,B10100,B11100,B0000,B00000,B00000,B00000,B00000};
   lcd.createChar(0, Celsius);
+  keypad.addEventListener(keypadEvent); // Add an event listener for this keypad
 }
 
 void loop() {
@@ -275,9 +300,9 @@ void loop() {
     }else if(coolingTemp-2.0 > temperatur){
         analogWrite(PIN_PWM,0);
     }
-    if(atof(ph_data)+0.10 < phValue){
+    if(atof(ph_data)+0.10 < phValue && digitalRead(RELAY1)==HIGH){
         digitalWrite(RELAY1,LOW);
-    }else if(atof(ph_data)-0.10 > phValue){
+    }else if(atof(ph_data)-0.10 > phValue && digitalRead(RELAY1)==LOW){
         digitalWrite(RELAY1,HIGH);
     }
   }            

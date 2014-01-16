@@ -209,7 +209,7 @@ void setLightSettings(){
 
 void writeLightArr(String sArr,int Index){
     
-    for(int n=0;n<8;n++){
+    for(int n=0;n<10;n++){
       // Split String in singel Structs
       String nStruc = slitString(sArr,',',n);
       // Split out Time
