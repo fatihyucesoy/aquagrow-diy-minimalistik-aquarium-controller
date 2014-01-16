@@ -30,7 +30,7 @@ void serialHandler(String input){
       adr = eepromLight +(sizeof(s_lightVal)*fValue.toInt());
       slitString(input,'#',2).toCharArray(t_char,sizeof(s_lightVal));
       EEPROM.updateBlock(adr, t_char,sizeof(s_lightVal));
-      EEPROM.updateByte(0, overwrite);
+      EEPROM.updateByte(eepromAdrLight, overwrite);
     break;
     // Dosing => Format 3#1=NPK=10:00=5=60
     case 3:
@@ -38,21 +38,29 @@ void serialHandler(String input){
       adr = eepromDosing +(sizeof(s_dosingVal)*fValue.toInt());
       slitString(input,'#',2).toCharArray(t_char,sizeof(s_dosingVal));
       EEPROM.updateBlock(adr, t_char,sizeof(s_dosingVal));
-      EEPROM.updateByte(1, overwrite);
+      EEPROM.updateByte(eepromAdrDosing, overwrite);
     break;
     // Temp => Format 4#30
     case 4:
-    coolingTemp=fValue.toInt();
-    EEPROM.updateInt(eepromTemp, coolingTemp);
-    EEPROM.updateByte(2, overwrite);
+      coolingTemp=fValue.toInt();
+      EEPROM.updateInt(eepromTemp, coolingTemp);
+      EEPROM.updateByte(eepromAdrTemp, overwrite);
     break;
     // PH => Format 5#7.00
     case 5:
-    char t_char[sizeof(fValue)];
-    fValue.toCharArray(t_char,sizeof(s_lightVal));
-    phValue=atof(t_char);
-    EEPROM.updateDouble(eepromPH, phValue);
-    EEPROM.updateByte(3, overwrite);
+      char p_char[sizeof(fValue)];
+      fValue.toCharArray(p_char,sizeof(s_lightVal));
+      phValue=atof(p_char);
+      EEPROM.updateDouble(eepromPH, phValue);
+      EEPROM.updateByte(eepromAdrPH, overwrite);
+    break;
+    // RELAY => Format 6#0:00:00=0,11:00:00=1,13:00:00=0,20:00:00=1,22:00:00=0,23:30:00=1
+    case 6:
+      writeRelayArr(slitString(input,'#',1),0);
+      char r_char[sizeof(fValue)];
+      fValue.toCharArray(r_char,sizeof(s_lightVal));
+      EEPROM.updateBlock(eepromRelay,  r_char,sizeof(s_relayVal));
+      EEPROM.updateByte(eepromAdrRelay, overwrite);
     break;
   }
     

@@ -11,53 +11,7 @@
 #include <Keypad_I2C.h>
 #include <Keypad.h>
 #include "structs.h"
-
-
-String s_lightVal ="0:01=0,11:00=0,13:00=50,20:00=50,22:00=0,23:30=0,23:30=0,23:32=0,23:30=0,23:32=0";
-String s_dosingVal = "1=NPK=10:00=5=60";
-String s_relayVal ="0:00=0,11:00=1,13:00=0,20:00=1,22:00=0,23:30=1";
-
-boolean overwrite=1;
-
-int coolingTemp = 30;
-double phValue = 7.00;
-boolean show_ph = false;
-boolean use_relay = false;
-
-
-#define PUMPCOUNTS 6      // Number Pumps
-#define KEYPADI2C 0x21
-
-// PIN MAPPING
-#define rx 2
-#define tx 3
-//#define KC1 2
-//#define KC2 3
-//#define KC3 4
-//#define KC4 5
-#define RELAY2 6
-#define RELAY1 7      // PH Steckdose 
-#define DOSE4 8      // Dosierpumpe 
-#define DOSE3 9      // Dosierpumpe 
-#define DOSE2 10      // PWM PIN    // Dosierpumpe 
-#define DOSE1 11  // Dosierpumpe 
-#define PIN_PWM 12  // PWM PIN    // Lüfter
-#define PIN_TEMP 13  // Temperatur
-//#define KR1 14
-//#define KR2 15
-//#define KR3 16
-//#define KR4 17
-
-int dosingPins[PUMPCOUNTS]={DOSE1,DOSE2,DOSE3};
-
-PUMP dosing[PUMPCOUNTS] = {  
-{0,0,"",dosingPins[0],false,0,0},
-{0,0,"",dosingPins[0],false,0,0},
-{0,0,"",dosingPins[1],false,0,0}, 
-{0,0,"",dosingPins[1],false,0,0}, 
-{0,0,"",dosingPins[2],false,0,0}, 
-{0,0,"",dosingPins[2],false,0,0}
-};
+#include "config.h"
 
 Timer t;
 PCA9685 ledDriver; 
@@ -65,11 +19,11 @@ RTC_DS1307 rtc;
 OneWire  ds(PIN_TEMP);
 SoftwareSerial PHserial(rx, tx);
 LiquidCrystal_I2C lcd(0x20);  // Set the LCD I2C address
-int stringStart, stringStop = 0;
-int scrollCursor = 16;
+uint8_t stringStart, stringStop = 0;
+uint8_t scrollCursor = 16;
 String lightPercent= "";
 
-LIGHT light_channels[8][10]={
+LIGHT light_channels[LIGHT_CHANEL][LIGHT_VALUES]={
         {{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}},
         {{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}},
         {{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}},
@@ -149,7 +103,7 @@ char keys[ROWS][COLS] = {
   {'*','0','#','D'}
 };
 byte rowPins[ROWS] = {0, 1, 2, 3}; //connect to the row pinouts of the keypad
-byte colPins[COLS] = {4, 5, 6,7}; //connect to the column pinouts of the keypad
+byte colPins[COLS] = {4, 5, 6, 7}; //connect to the column pinouts of the keypad
 
 //initialize an instance of class NewKeypad
 Keypad_I2C keypad = Keypad_I2C( makeKeymap(keys), rowPins, colPins, ROWS, COLS, KEYPADI2C );
@@ -158,7 +112,7 @@ Keypad_I2C keypad = Keypad_I2C( makeKeymap(keys), rowPins, colPins, ROWS, COLS, 
 float temperatur;
 
 unsigned long last_print = 0;
-unsigned int switch_print=0;
+uint8_t switch_print=0;
 
 String inputString = "";         // a string to hold incoming data
 boolean stringComplete = false;  // whether the string is complete
@@ -179,6 +133,11 @@ int eepromDosing= eepromLight+(sizeof(s_lightVal)*8);
 int eepromTemp= eepromDosing+(sizeof(s_dosingVal)*PUMPCOUNTS);
 int eepromPH= eepromTemp+(sizeof(coolingTemp));
 int eepromRelay= eepromPH+(sizeof(s_relayVal));
+uint8_t eepromAdrLight= 0;
+uint8_t eepromAdrDosing= 1;
+uint8_t eepromAdrTemp= 2;
+uint8_t eepromAdrPH= 3;
+uint8_t eepromAdrRelay= 4;
 
           
 void setup() {
@@ -190,17 +149,17 @@ void setup() {
   // More writes will only give errors when _EEPROMEX_DEBUG is set
   EEPROM.setMaxAllowedWrites(maxAllowedWrites);
   
-  if(EEPROM.readByte(2)==overwrite){
+  if(EEPROM.readByte(eepromAdrTemp)==overwrite){
     coolingTemp=EEPROM.readInt(eepromTemp);
   }else{
     EEPROM.updateInt(eepromTemp, coolingTemp);
-    EEPROM.updateByte(2, overwrite);
+    EEPROM.updateByte(eepromAdrTemp, overwrite);
   }
-  if(EEPROM.readByte(3)==overwrite){
+  if(EEPROM.readByte(eepromAdrPH)==overwrite){
     phValue=EEPROM.readDouble(eepromPH);
   }else{
     EEPROM.updateDouble(eepromPH, phValue);
-    EEPROM.updateByte(3, overwrite);
+    EEPROM.updateByte(eepromAdrPH, overwrite);
   }
   
   setLightSettings();
@@ -262,36 +221,39 @@ void loop() {
     if (switch_print <= 5){
       switch_print = millis();
       lcd.setCursor ( 9, 0 ); 
-      lcd.print ("C=");
+      lcd.print (F("C="));
       lcd.print (getTemp());
       lcd.write ((uint8_t)0);
     }else if (switch_print < 10 && show_ph==true){
       lcd.setCursor ( 9, 0 ); 
-      lcd.print ("ph=");
+      lcd.print (F("ph="));
       lcd.print (ph_data);
     }else{
       switch_print=0;
     }
-      
     
     // Display ausgabe Untere Zeile
     lcd.setCursor(scrollCursor, 1);
-    lcd.print(lightPercent.substring(stringStart,stringStop));
-    if(stringStart == 0 && scrollCursor > 0){
-      scrollCursor--;
-      stringStop++;
-    } else if (stringStart == stringStop){
-      stringStart = stringStop = 0;
-      scrollCursor = 16;
-    } else if (stringStop == lightPercent.length() && scrollCursor == 0) {
-      stringStart++;
-    } else {
-      stringStart++;
-      stringStop++;
-    }
-  
     if(!manualLight){
+      
+      // Licht Dimmen / Sting bauen
       setLight();
+      lcd.print(lightPercent.substring(stringStart,stringStop));
+      if(stringStart == 0 && scrollCursor > 0){
+        scrollCursor--;
+        stringStop++;
+      } else if (stringStart == stringStop){
+        stringStart = stringStop = 0;
+        scrollCursor = 16;
+      } else if (stringStop == lightPercent.length() && scrollCursor == 0) {
+        stringStart++;
+      } else {
+        stringStart++;
+        stringStop++;
+      }
+    
+    }else{
+      lcd.print(F("Manueller Modus"));
     }
 //    Serial.println(freeMemory());
     temperatur = getTemp();

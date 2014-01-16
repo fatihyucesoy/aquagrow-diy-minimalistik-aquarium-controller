@@ -1,6 +1,6 @@
 int setRelay(){
   int curIndex=0;
-  for(int n=0;n<8;n++){
+  for(int n=0;n<RELAY_TIMES;n++){
     if(relay_channels[n].time < rtc.daystamp){
       curIndex=n;
     }else{
@@ -16,29 +16,26 @@ int setRelay(){
 
 void setRelaySettings(){
   // Check loading of stored Light Values
-  boolean loadSetting=EEPROM.readByte(4);
+  boolean loadSetting=EEPROM.readByte(eepromAdrRelay);
   String sArr = "";
   char t_char[sizeof(s_relayVal)];
-  for(int i=0;i<6;i++){
-    // Read String from EEPROM and Convert to light
-    int adr = eepromRelay;
+    // Read String from EEPROM and Convert to Relay
     if(loadSetting==overwrite){
-      EEPROM.readBlock<char>(adr, t_char, sizeof(s_relayVal));
+      EEPROM.readBlock<char>(eepromRelay, t_char, sizeof(s_relayVal));
       String str(t_char);
       sArr= str;
     }else{
       s_relayVal.toCharArray(t_char,sizeof(s_relayVal));
-      EEPROM.updateBlock(adr, t_char,sizeof(s_relayVal));
+      EEPROM.updateBlock(eepromRelay, t_char,sizeof(s_relayVal));
       sArr=s_relayVal;
     }
-  writeRelayArr(sArr,i);
-  }
-  EEPROM.updateByte(4, overwrite);
+  writeRelayArr(sArr,0);
+  EEPROM.updateByte(eepromAdrRelay, overwrite);
 }
 
 void writeRelayArr(String sArr,int Index){
     
-    for(int n=0;n<6;n++){
+    for(int n=0;n<RELAY_TIMES;n++){
       // Split String in singel Structs
       String nStruc = slitString(sArr,',',n);
       // Split out Time
@@ -48,9 +45,10 @@ void writeRelayArr(String sArr,int Index){
       // create ts
       String nTSh = slitString(nTime,':',0);
       String nTSm = slitString(nTime,':',1);
-      int nTS = get_ts(nTSh.toInt(),nTSm.toInt(),0);
+      String nTSs = slitString(nTime,':',2);
+      int nTS = get_ts(nTSh.toInt(),nTSm.toInt(),nTSs.toInt());
       // Copy to LightArray
-      relay_channels[Index].time=nTS;
-      relay_channels[Index].state=nVal.toInt();
+      relay_channels[n].time=nTS;
+      relay_channels[n].state=nVal.toInt();
     }
 }

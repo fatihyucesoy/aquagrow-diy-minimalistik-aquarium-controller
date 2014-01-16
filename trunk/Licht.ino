@@ -1,6 +1,6 @@
 void setLight(){
   lightPercent="";
-    for( int i=0;i <  8; i++){
+    for( int i=0;i <  LIGHT_CHANEL; i++){
         uint16_t c_PWM = PWM_Licht(i);
         
         // 40° = 100% ~ 45/40*100-110=2,5
@@ -47,7 +47,7 @@ void setLED(uint8_t channel, uint16_t Value){
 int PWM_Licht(int lightIndex){
   
   int curIndex=0;
-  for(int n=0;n<8;n++){
+  for(int n=0;n<LIGHT_CHANEL;n++){
     if(light_channels[lightIndex][n].time < rtc.daystamp){
       curIndex=n;
     }else{
@@ -67,10 +67,10 @@ int PWM_Licht(int lightIndex){
   float pastSeconds;
   uint32_t Start,Ende;
   uint8_t oMin,oMax;
-    if(curIndex ==7 ){
-        Start = light_channels[lightIndex][7].time;
+    if(curIndex ==(LIGHT_VALUES-1) ){
+        Start = light_channels[lightIndex][(LIGHT_VALUES-1)].time;
         Ende = light_channels[lightIndex][0].time;
-        oMin = light_channels[lightIndex][7].level;
+        oMin = light_channels[lightIndex][(LIGHT_VALUES-1)].level;
         oMax = light_channels[lightIndex][0].level;
         
         pastSeconds = rtc.daystamp-Start+0.5;    // vergangene Sekunden ~1616Sek ~ 27min
@@ -85,9 +85,9 @@ int PWM_Licht(int lightIndex){
         pastSeconds = rtc.daystamp-Start+0.5;    // vergangene Sekunden ~1616Sek ~ 27min
         dimTime=Ende - Start;
     }else{
-        Start = light_channels[lightIndex][7].time;
+        Start = light_channels[lightIndex][(LIGHT_VALUES-1)].time;
         Ende = light_channels[lightIndex][0].time;
-        oMin = light_channels[lightIndex][7].level;
+        oMin = light_channels[lightIndex][(LIGHT_VALUES-1)].level;
         oMax = light_channels[lightIndex][0].level;
       
         pastSeconds = get_ts(24,0,0)-Start + rtc.daystamp+0.5; 
@@ -187,10 +187,10 @@ int PWM_Licht(int lightIndex){
 
 void setLightSettings(){
   // Check loading of stored Light Values
-  boolean loadSetting=EEPROM.readByte(0);
+  boolean loadSetting=EEPROM.readByte(eepromAdrLight);
   String sArr = "";
       char t_char[sizeof(s_lightVal)];
-  for(int i=0;i<8;i++){
+  for(int i=0;i<LIGHT_CHANEL;i++){
     // Read String from EEPROM and Convert to light
     int adr = eepromLight +(sizeof(s_lightVal)*i);
     if(loadSetting==overwrite){
@@ -204,12 +204,12 @@ void setLightSettings(){
     }
     writeLightArr(sArr,i);
   }
-  EEPROM.updateByte(0, overwrite);
+  EEPROM.updateByte(eepromAdrLight, overwrite);
 }
 
 void writeLightArr(String sArr,int Index){
     
-    for(int n=0;n<10;n++){
+    for(int n=0;n<LIGHT_VALUES;n++){
       // Split String in singel Structs
       String nStruc = slitString(sArr,',',n);
       // Split out Time

@@ -25,7 +25,7 @@ void resetPumps(){
 
 void setPumpSettings(){
   // Check loading of stored Light Values
-  boolean loadSetting=EEPROM.readByte(1);
+  boolean loadSetting=EEPROM.readByte(eepromAdrDosing);
   String sArr = "";
       char t_char[sizeof(s_dosingVal)];
   for(int i=0;i<PUMPCOUNTS;i++){
@@ -42,7 +42,7 @@ void setPumpSettings(){
     }
     writePumpArr(sArr,i);
   }
-  EEPROM.updateByte(1, overwrite);
+  EEPROM.updateByte(eepromAdrDosing, overwrite);
 }
 
 void writePumpArr(String sArr,int Index){
