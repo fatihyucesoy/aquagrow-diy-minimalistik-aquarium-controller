@@ -2,7 +2,7 @@
 #define PUMPCOUNTS 6      // Number Pumps
 #define LIGHT_CHANEL 8    
 #define LIGHT_VALUES 10
-#define RELAY_TIMES 6      // Number Pumps
+#define RELAY_TIMES 6
 #define KEYPADI2C 0x21
 // PIN MAPPING
 #define rx 2
@@ -39,9 +39,9 @@ boolean use_relay = false;
 
 
 
-int dosingPins[PUMPCOUNTS]={DOSE1,DOSE2,DOSE3};
+int dosingPins[]={DOSE1,DOSE2,DOSE3};
 
-PUMP dosing[PUMPCOUNTS] = {  
+PUMP dosing[] = {  
 {0,0,"",dosingPins[0],false,0,0},
 {0,0,"",dosingPins[0],false,0,0},
 {0,0,"",dosingPins[1],false,0,0}, 
@@ -61,6 +61,6 @@ LIGHT light_channels[LIGHT_CHANEL][LIGHT_VALUES]={
         {{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}}
 };
 
-RELAY relay_channels[6]={
+RELAY relay_channels[]={
                 {0,0},{0,0},{0,0},{0,0},{0,0},{0,0}
               };
