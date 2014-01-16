@@ -9,6 +9,11 @@ typedef struct {
 }LIGHT;
 
 typedef struct {
+  int time;  //34200; 
+  boolean state;  
+}RELAY;
+
+typedef struct {
     int time;  //34200;    // 9:30
     boolean active;
     String name;
