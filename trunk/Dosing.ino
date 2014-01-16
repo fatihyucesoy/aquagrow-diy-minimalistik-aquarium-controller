@@ -23,7 +23,7 @@ void resetPumps(){
   }
 }
 
-void setPumpSettings(PUMP dosing[]){
+void setPumpSettings(){
   // Check loading of stored Light Values
   boolean loadSetting=EEPROM.readByte(1);
   String sArr = "";
@@ -35,13 +35,17 @@ void setPumpSettings(PUMP dosing[]){
       EEPROM.readBlock<char>(adr, t_char, sizeof(s_dosingVal));
       String str(t_char);
       sArr= str;
-      
     }else{
       s_dosingVal.toCharArray(t_char,sizeof(s_dosingVal));
       EEPROM.updateBlock(adr, t_char,sizeof(s_dosingVal));
       sArr=s_dosingVal;
     }
-    
+    writePumpArr(sArr,i);
+  }
+  EEPROM.updateByte(1, overwrite);
+}
+
+void writePumpArr(String sArr,int Index){
     // Split out Time
     String nActive = slitString(sArr,'=',0);
     // Split out Time
@@ -57,11 +61,10 @@ void setPumpSettings(PUMP dosing[]){
     String nTSm = slitString(nTime,':',1);
     int nTS = get_ts(nTSh.toInt(),nTSm.toInt(),0);
     // Copy to dosingArray
-    dosing[i].active=nActive.toInt();
-    dosing[i].name=nName;
-    dosing[i].time=nTS;
-    dosing[i].mldosing=nVal.toInt();
-    dosing[i].mlperminute=nML.toInt();
-  }
+    dosing[Index].active=nActive.toInt();
+    dosing[Index].name=nName;
+    dosing[Index].time=nTS;
+    dosing[Index].mldosing=nVal.toInt();
+    dosing[Index].mlperminute=nML.toInt();
 }
   

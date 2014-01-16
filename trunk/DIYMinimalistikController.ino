@@ -33,6 +33,7 @@ String s_dosingVal = "1=NPK=10:00=5=60";
 boolean overwrite=1;
 
 int coolingTemp = 30;
+double phValue = 7.00;
 boolean show_ph = false;
 
 
@@ -44,6 +45,7 @@ boolean show_ph = false;
 #define DOSE2 10      // PWM PIN    // Dosierpumpe 
 #define DOSE3 9      // Dosierpumpe 
 #define DOSE4 8      // Dosierpumpe 
+#define RELAY1 7      // PH Steckdose 
 #define PUMPCOUNTS 3      // Number Pumps 
 
 int dosingPins[PUMPCOUNTS]={DOSE1,DOSE2,DOSE3};
@@ -64,7 +66,16 @@ int stringStart, stringStop = 0;
 int scrollCursor = 16;
 String lightPercent= "";
 
-LIGHT light_channels[8][8];
+LIGHT light_channels[8][8]={
+        {{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}},
+        {{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}},
+        {{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}},
+        {{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}},
+        {{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}},
+        {{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}},
+        {{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}},
+        {{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}}
+};
 
 boolean manualLight=false;
 boolean pumpReset=false;
@@ -143,6 +154,7 @@ const int memBase          = 4;
 int eepromLight= memBase;
 int eepromDosing= eepromLight+(sizeof(s_lightVal)*8);
 int eepromTemp= eepromDosing+(sizeof(s_dosingVal)*PUMPCOUNTS);
+int eepromPH= eepromTemp+(sizeof(coolingTemp));
 
           
 void setup() {
@@ -160,9 +172,15 @@ void setup() {
     EEPROM.updateInt(eepromTemp, coolingTemp);
     EEPROM.updateByte(2, overwrite);
   }
+  if(EEPROM.readByte(3)==overwrite){
+    phValue=EEPROM.readDouble(eepromPH);
+  }else{
+    EEPROM.updateDouble(eepromPH, phValue);
+    EEPROM.updateByte(3, overwrite);
+  }
   
-  setLightSettings(light_channels);
-  setPumpSettings(dosing);
+  setLightSettings();
+  setPumpSettings();
   // reserve 200 bytes for the inputString:
   inputString.reserve(200);
   PHserial.begin(38400);
@@ -256,6 +274,11 @@ void loop() {
         analogWrite(PIN_PWM,255);
     }else if(coolingTemp-2.0 > temperatur){
         analogWrite(PIN_PWM,0);
+    }
+    if(atof(ph_data)+0.10 < phValue){
+        digitalWrite(RELAY1,LOW);
+    }else if(atof(ph_data)-0.10 > phValue){
+        digitalWrite(RELAY1,HIGH);
     }
   }            
 }

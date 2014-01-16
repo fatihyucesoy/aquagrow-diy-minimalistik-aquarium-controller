@@ -185,7 +185,7 @@ int PWM_Licht(int lightIndex){
     
 }
 
-void setLightSettings(LIGHT lightArray[][8]){
+void setLightSettings(){
   // Check loading of stored Light Values
   boolean loadSetting=EEPROM.readByte(0);
   String sArr = "";
@@ -197,12 +197,17 @@ void setLightSettings(LIGHT lightArray[][8]){
       EEPROM.readBlock<char>(adr, t_char, sizeof(s_lightVal));
       String str(t_char);
       sArr= str;
-      
     }else{
       s_lightVal.toCharArray(t_char,sizeof(s_lightVal));
       EEPROM.updateBlock(adr, t_char,sizeof(s_lightVal));
       sArr=s_lightVal;
     }
+    writeLightArr(sArr,i);
+  }
+  EEPROM.updateByte(0, overwrite);
+}
+
+void writeLightArr(String sArr,int Index){
     
     for(int n=0;n<8;n++){
       // Split String in singel Structs
@@ -216,9 +221,7 @@ void setLightSettings(LIGHT lightArray[][8]){
       String nTSm = slitString(nTime,':',1);
       int nTS = get_ts(nTSh.toInt(),nTSm.toInt(),0);
       // Copy to LightArray
-      lightArray[i][n].time=nTS;
-      lightArray[i][n].level=nVal.toInt();
+      light_channels[Index][n].time=nTS;
+      light_channels[Index][n].level=nVal.toInt();
     }
-  }
-  EEPROM.updateByte(0, overwrite);
 }
