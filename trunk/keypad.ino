@@ -49,6 +49,12 @@ void keypadEvent(KeypadEvent key){
         }else if (key == 'C') {
           t.pulse(dosing[2].pinAddr,60000 / dosing[2].mlperminute, LOW);
         }else if (key == 'D') {
+          if(digitalRead(RELAY2)==HIGH){
+              digitalWrite(RELAY2,LOW);
+          }else{
+              digitalWrite(RELAY2,HIGH);
+          }
+          manualRelay=true;
         }else if (key == '*') {
           f_cal();    //calibrate to a pH of 4
         }else if (key == '#') {
@@ -84,6 +90,8 @@ void keypadEvent(KeypadEvent key){
           chanel=7;
         }else if (key == '9') {
           manualLight=false;
+        }else if (key == 'D') {
+          manualRelay=false;
         }
         break;
     }
