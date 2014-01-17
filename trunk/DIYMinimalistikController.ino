@@ -9,7 +9,7 @@
 #include <LiquidCrystal_I2C.h>
 #include <SoftwareSerial.h>
 #include <Keypad_I2C.h>
-#include <Keypad.h>
+//#include <Keypad.h>
 #include "structs.h"
 #include "config.h"
 
@@ -169,6 +169,7 @@ void setup() {
   
   Wire.begin();           // Wire must be started!
   rtc.begin();
+  keypad.begin( );    
 
   
   ledDriver.begin(B000000);  // Address pins A5-A0 set to B111000
