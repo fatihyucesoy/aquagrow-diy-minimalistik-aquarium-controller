@@ -10,7 +10,7 @@
 //#define KC1 2
 //#define KC2 3
 //#define KC3 4
-//#define KC4 5
+#define FEEDER 5
 #define RELAY2 6
 #define RELAY1 7      // PH Steckdose 
 #define DOSE4 8      // Dosierpumpe 
@@ -28,6 +28,7 @@
 String s_lightVal ="0:01=0,11:00=0,13:00=50,20:00=50,22:00=0,23:30=0,23:30=0,23:32=0,23:30=0,23:32=0";
 String s_dosingVal = "1=NPK=10:00=5=60";
 String s_relayVal ="0:00:00=0,11:00:00=1,13:00:00=0,20:00:00=1,22:00:00=0,23:30:00=1";
+String s_feederVal ="0:00:00=0,11:00:00=1";
 
 boolean overwrite=1;
 
@@ -35,6 +36,7 @@ int coolingTemp = 30;
 double phValue = 7.00;
 boolean show_ph = false;
 boolean use_relay = false;
+boolean use_feeding = false;
 
 
 
@@ -63,4 +65,8 @@ LIGHT light_channels[LIGHT_CHANEL][LIGHT_VALUES]={
 
 RELAY relay_channels[]={
                 {0,0},{0,0},{0,0},{0,0},{0,0},{0,0}
+              };
+              
+FEED feeder_channels[]={
+                {0,0},{0,0}
               };

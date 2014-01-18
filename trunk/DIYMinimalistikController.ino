@@ -27,7 +27,7 @@ String lightPercent= "";
 boolean manualLight=false;
 boolean manualRelay=false;
 boolean pumpReset=false;
-
+boolean feederReset=false;
 
 
 PROGMEM prog_uint16_t pwmtable[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3,3,3,
@@ -120,12 +120,14 @@ int eepromLight= memBase;
 int eepromDosing= eepromLight+(sizeof(s_lightVal)*8);
 int eepromTemp= eepromDosing+(sizeof(s_dosingVal)*PUMPCOUNTS);
 int eepromPH= eepromTemp+(sizeof(coolingTemp));
-int eepromRelay= eepromPH+(sizeof(s_relayVal));
+int eepromRelay= eepromPH+(sizeof(phValue));
+int eepromFeeding= eepromRelay+(sizeof(relay_channels));
 uint8_t eepromAdrLight= 0;
 uint8_t eepromAdrDosing= 1;
 uint8_t eepromAdrTemp= 2;
 uint8_t eepromAdrPH= 3;
 uint8_t eepromAdrRelay= 4;
+uint8_t eepromAdrFeeding= 5;
 
           
 void setup() {
@@ -191,15 +193,18 @@ void loop() {
   rtc.now();
   t.update();
   setDosing(0);
+  
+  setFeeding();
+  
   if(manualRelay==false){
     setRelay();
   }
-  if(PHserial.available() > 0){
+  if(PHserial.available() > 0 && show_ph==true){
    received_from_sensor=PHserial.readBytesUntil(13,ph_data,20);
    ph_data[received_from_sensor]=0;
    string_received=1;
   } 
-  if(arduino_only==1){
+  if(arduino_only==1 && show_ph==true){
     Arduino_Control();
   }
   

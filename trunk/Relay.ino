@@ -1,4 +1,4 @@
-int setRelay(){
+void setRelay(){
   int curIndex=0;
   for(int n=0;n<RELAY_TIMES;n++){
     if(relay_channels[n].time < rtc.daystamp){

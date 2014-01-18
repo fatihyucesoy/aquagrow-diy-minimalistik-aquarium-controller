@@ -90,6 +90,8 @@ void keypadEvent(KeypadEvent key){
           chanel=7;
         }else if (key == '9') {
           manualLight=false;
+        }else if (key == '0') {
+          t.pulse(FEEDER, 2000, LOW);
         }else if (key == 'D') {
           manualRelay=false;
         }

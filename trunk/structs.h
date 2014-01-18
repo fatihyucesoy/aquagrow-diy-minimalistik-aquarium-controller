@@ -15,6 +15,12 @@ typedef struct {
 }RELAY;
 
 typedef struct {
+  int time;  //34200; 
+  int pushed;  
+  boolean status;   /*Pin Status*/
+}FEED;
+
+typedef struct {
     int time;  //34200;    // 9:30
     boolean active;
     String name;
