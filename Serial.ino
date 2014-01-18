@@ -56,14 +56,23 @@ void serialHandler(String input){
     break;
     // RELAY => Format 6#0:00:00=0,11:00:00=1,13:00:00=0,20:00:00=1,22:00:00=0,23:30:00=1
     case 6:
-      writeRelayArr(slitString(input,'#',1),0);
+      writeRelayArr(slitString(input,'#',1));
       char r_char[sizeof(fValue)];
-      fValue.toCharArray(r_char,sizeof(s_lightVal));
+      fValue.toCharArray(r_char,sizeof(s_relayVal));
       EEPROM.updateBlock(eepromRelay,  r_char,sizeof(s_relayVal));
       EEPROM.updateByte(eepromAdrRelay, overwrite);
     break;
-  }
-    
+    // RELAY => Format 7#0:00=2,11:00=1
+/*
+case 7:
+      writeFeedingArr(slitString(input,'#',1));
+      char f_char[sizeof(fValue)];
+      fValue.toCharArray(f_char,sizeof(s_feederVal));
+      EEPROM.updateBlock(eepromFeeding, f_char,sizeof(s_feederVal));
+      EEPROM.updateByte(eepromAdrFeeding, overwrite);
+    break;
+*/
+  }  
 }
 
 //Help function for slitting array

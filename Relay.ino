@@ -7,9 +7,9 @@ void setRelay(){
   }
 }
 
-    if(relay_channels[curIndex].state == true && digitalRead(RELAY2)==HIGH && use_relay){
+    if(relay_channels[curIndex].state == true && digitalRead(RELAY2)==HIGH ){
         digitalWrite(RELAY2,LOW);
-    }else if(relay_channels[curIndex].state == false && digitalRead(RELAY2)==LOW && use_relay){
+    }else if(relay_channels[curIndex].state == false && digitalRead(RELAY2)==LOW ){
         digitalWrite(RELAY2,HIGH);
     }
 }
@@ -29,11 +29,11 @@ void setRelaySettings(){
       EEPROM.updateBlock(eepromRelay, t_char,sizeof(s_relayVal));
       sArr=s_relayVal;
     }
-  writeRelayArr(sArr,0);
+  writeRelayArr(sArr);
   EEPROM.updateByte(eepromAdrRelay, overwrite);
 }
 
-void writeRelayArr(String sArr,int Index){
+void writeRelayArr(String sArr){
     
     for(int n=0;n<RELAY_TIMES;n++){
       // Split String in singel Structs
