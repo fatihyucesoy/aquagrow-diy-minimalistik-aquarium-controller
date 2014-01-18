@@ -196,7 +196,7 @@ void loop() {
   
   setFeeding();
   
-  if(manualRelay==false){
+  if(use_relay && manualRelay==false){
     setRelay();
   }
   if(PHserial.available() > 0 && show_ph==true){

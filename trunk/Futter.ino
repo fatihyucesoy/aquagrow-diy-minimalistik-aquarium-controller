@@ -34,11 +34,11 @@ void setFeedingSettings(){
       EEPROM.updateBlock(eepromFeeding, t_char,sizeof(s_feederVal));
       sArr=s_feederVal;
     }
-  writeFeedingArr(sArr,0);
+  writeFeedingArr(sArr);
   EEPROM.updateByte(eepromAdrFeeding, overwrite);
 }
 
-void writeFeedingArr(String sArr,int Index){
+void writeFeedingArr(String sArr){
     
     for(int n=0;n<2;n++){
       // Split String in singel Structs
