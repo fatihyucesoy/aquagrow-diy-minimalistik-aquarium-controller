@@ -118,16 +118,16 @@ const int maxAllowedWrites = 1000;
 const int memBase          = 10;
 int eepromLight= memBase;
 int eepromDosing= eepromLight+(sizeof(s_lightVal)*8);
-int eepromTemp= eepromDosing+(sizeof(s_dosingVal)*PUMPCOUNTS);
-int eepromPH= eepromTemp+(sizeof(coolingTemp));
-int eepromRelay= eepromPH+(sizeof(phValue));
-int eepromFeeding= eepromRelay+(sizeof(relay_channels));
+//int eepromTemp= eepromDosing+(sizeof(s_dosingVal)*PUMPCOUNTS);
+//int eepromPH= eepromTemp+(sizeof(coolingTemp));
+//int eepromRelay= eepromPH+(sizeof(phValue));
+//int eepromFeeding= eepromRelay+(sizeof(relay_channels));
 uint8_t eepromAdrLight= 0;
 uint8_t eepromAdrDosing= 1;
-uint8_t eepromAdrTemp= 2;
-uint8_t eepromAdrPH= 3;
-uint8_t eepromAdrRelay= 4;
-uint8_t eepromAdrFeeding= 5;
+//uint8_t eepromAdrTemp= 2;
+//uint8_t eepromAdrPH= 3;
+//uint8_t eepromAdrRelay= 4;
+//uint8_t eepromAdrFeeding= 5;
 
           
 void setup() {
@@ -138,7 +138,7 @@ void setup() {
   // Set maximum allowed writes to maxAllowedWrites. 
   // More writes will only give errors when _EEPROMEX_DEBUG is set
   EEPROM.setMaxAllowedWrites(maxAllowedWrites);
-  
+/*  
   if(EEPROM.readByte(eepromAdrTemp)==overwrite){
     coolingTemp=EEPROM.readInt(eepromTemp);
   }else{
@@ -151,9 +151,10 @@ void setup() {
     EEPROM.updateDouble(eepromPH, phValue);
     EEPROM.updateByte(eepromAdrPH, overwrite);
   }
-  
+  */
   setLightSettings();
   setPumpSettings();
+  setFeedingSettings();
   // reserve 200 bytes for the inputString:
   inputString.reserve(200);
   PHserial.begin(38400);
@@ -192,7 +193,7 @@ void loop() {
   }
   rtc.now();
   t.update();
-  setDosing(0);
+  setDosing();
   
   setFeeding();
   

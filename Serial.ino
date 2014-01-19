@@ -40,6 +40,7 @@ void serialHandler(String input){
       EEPROM.updateBlock(adr, t_char,sizeof(s_dosingVal));
       EEPROM.updateByte(eepromAdrDosing, overwrite);
     break;
+    /*
     // Temp => Format 4#30
     case 4:
       coolingTemp=fValue.toInt();
@@ -63,7 +64,6 @@ void serialHandler(String input){
       EEPROM.updateByte(eepromAdrRelay, overwrite);
     break;
     // RELAY => Format 7#0:00=2,11:00=1
-/*
 case 7:
       writeFeedingArr(slitString(input,'#',1));
       char f_char[sizeof(fValue)];
