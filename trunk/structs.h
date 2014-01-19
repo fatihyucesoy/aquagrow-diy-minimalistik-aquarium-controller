@@ -26,6 +26,7 @@ typedef struct {
     String name;
     int pinAddr;
     boolean status;   /*Pin Status*/
+    boolean dim_direction;
     int mlperminute;    /*Milliliter per minute, depending on the pump*/
     int mldosing;       /*how much ml should be produced per dosing*/
 }PUMP;

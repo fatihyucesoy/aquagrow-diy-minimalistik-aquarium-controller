@@ -15,6 +15,8 @@ void setRelay(){
 }
 
 void setRelaySettings(){
+  writeRelayArr(s_relayVal);
+  /*
   // Check loading of stored Light Values
   boolean loadSetting=EEPROM.readByte(eepromAdrRelay);
   String sArr = "";
@@ -31,10 +33,9 @@ void setRelaySettings(){
     }
   writeRelayArr(sArr);
   EEPROM.updateByte(eepromAdrRelay, overwrite);
-}
+*/}
 
 void writeRelayArr(String sArr){
-    
     for(int n=0;n<RELAY_TIMES;n++){
       // Split String in singel Structs
       String nStruc = slitString(sArr,',',n);

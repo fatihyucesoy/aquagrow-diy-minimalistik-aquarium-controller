@@ -1,4 +1,4 @@
-void setDosing(int Value){
+void setDosing(){
   resetPumps();
     for( int i=0;i <= PUMPCOUNTS; i++){
       if(dosing[i].active!=0){

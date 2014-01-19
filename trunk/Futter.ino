@@ -19,7 +19,10 @@ void resetFeeting(){
     }
   }
 }
+
 void setFeedingSettings(){
+  writeFeedingArr(s_feederVal);
+  /*
   // Check loading of stored Light Values
   boolean loadSetting=EEPROM.readByte(eepromAdrFeeding);
   String sArr = "";
@@ -36,6 +39,7 @@ void setFeedingSettings(){
     }
   writeFeedingArr(sArr);
   EEPROM.updateByte(eepromAdrFeeding, overwrite);
+*/
 }
 
 void writeFeedingArr(String sArr){
