@@ -1,0 +1,1 @@
+DIY Minimalistik Controller by AquaGrow.de is a lightweight Controller for LED Controlling and dosing for Sweetwater Aquariums
